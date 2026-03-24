@@ -1,6 +1,6 @@
 # Course RAG Agent
 
-An intelligent RAG (Retrieval-Augmented Generation) agent for answering questions based on course materials. Built with LangGraph, Qdrant, and local LLMs via Ollama.
+An intelligent RAG (Retrieval-Augmented Generation) agent for answering questions based on course materials. Built with LangGraph, Qdrant, and Groq.
 
 ## Architecture
 
@@ -13,9 +13,7 @@ User Question
                      ↓
                Reranking (CrossEncoder)
                      ↓
-               Grade (LLM)
-                     ├── relevant   → Generate Answer
-                     └── irrelevant → No Answer
+               Generate Answer
 ```
 
 ## Tech Stack
@@ -23,9 +21,9 @@ User Question
 | Component | Technology |
 |-----------|------------|
 | Agent framework | LangGraph |
-| LLM | Ollama (local) / Groq / OpenAI / Anthropic |
+| LLM | Groq / Ollama / OpenAI / Anthropic |
 | Vector database | Qdrant |
-| Embeddings | multilingual-e5-large (Ollama) |
+| Embeddings | multilingual-e5-large (Ollama or FastEmbed) |
 | Reranking | CrossEncoder (sentence-transformers) |
 | Hybrid search | Dense + BM25 via Qdrant |
 | API | FastAPI |
@@ -35,8 +33,9 @@ User Question
 
 - **Hybrid search** — combines semantic (dense) and keyword (BM25) search with RRF fusion
 - **Reranking** — CrossEncoder reranks retrieved chunks for better relevance
+- **Conversation summarization** — automatically summarizes history every 6 messages
 - **Multi-provider LLM** — switch between Ollama, OpenAI, Anthropic, Groq via `.env`
-- **Conversation memory** — maintains chat history within a session
+- **Multi-provider embeddings** — switch between Ollama and FastEmbed via `.env`
 - **Auto-indexing** — automatically indexes files from `uploads/` on startup
 - **LangSmith tracing** — full observability of agent execution
 - **Health checks** — `/health` and `/health/detailed` endpoints
@@ -47,13 +46,13 @@ User Question
 
 - Python 3.12+
 - Docker
-- Ollama (for local LLM)
+- Ollama — optional, only if using local LLM or local embeddings
 
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/yourusername/rag-agent.git
-cd rag-agent
+git clone https://github.com/khvandima/ai-docs-assistant.git
+cd ai-docs-assistant
 cp .env.example .env
 # Edit .env with your settings
 ```
@@ -64,7 +63,7 @@ cp .env.example .env
 docker run -d --name qdrant -p 6333:6333 qdrant/qdrant
 ```
 
-### 3. Pull embedding model
+### 3. Pull embedding model (only if using Ollama)
 
 ```bash
 ollama pull jeffh/intfloat-multilingual-e5-large:q8_0
@@ -92,11 +91,21 @@ docker-compose up --build
 All settings are managed via `.env`. Key options:
 
 ```bash
-# Switch LLM provider
-PROVIDER=ollama        # or: openai, anthropic, groq
-MODEL=my-model
+# LLM provider
+PROVIDER=groq          # or: ollama, openai, anthropic
+MODEL=llama-3.3-70b-versatile
+GROQ_API_KEY=your_key
 
-# Tune retrieval
+# Embeddings provider
+EMBED_PROVIDER=fastembed   # or: ollama (requires OLLAMA_HOST)
+FASTEMBED_MODEL=intfloat/multilingual-e5-large
+
+# Qdrant
+QDRANT_HOST=localhost
+QDRANT_PORT=6333
+QDRANT_COLLECTION_NAME=course_knowledge
+
+# Retrieval
 SCORE_THRESHOLD=0.60   # minimum relevance score
 RERANK_TOP_K=3         # chunks to keep after reranking
 CHUNK_SIZE=512         # chunk size in characters
@@ -130,17 +139,9 @@ Evaluated on 6 questions from real course materials using [Ragas](https://ragas.
 
 > Evaluated with `llama-3.1-8b-instant` via Groq API. Run `python -m tests.eval` to reproduce.
 
-## RAG Evaluation
-
 ```bash
 python -m tests.eval
 ```
-
-Evaluates the pipeline using Ragas metrics:
-- **Faithfulness** — answer grounded in context
-- **Answer relevancy** — answer addresses the question
-- **Context precision** — relevant chunks ranked first
-- **Context recall** — all relevant chunks retrieved
 
 ## API Endpoints
 
@@ -161,7 +162,8 @@ Evaluates the pipeline using Ragas metrics:
 ├── app/
 │   ├── agent.py          # LangGraph graph
 │   ├── ingestion.py      # MD file indexing pipeline
-│   ├── embeddings.py     # Embedding model
+│   ├── embeddings.py     # Embedding model (Ollama / FastEmbed)
+│   ├── sparse.py         # Shared BM25 sparse model
 │   ├── llm_factory.py    # Multi-provider LLM factory
 │   ├── reranker.py       # CrossEncoder reranking
 │   ├── retry.py          # Retry logic
