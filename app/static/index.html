@@ -1,0 +1,1223 @@
+<!-- <!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course Assistant</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --bg2: #161616;
+    --bg3: #1e1e1e;
+    --border: #2a2a2a;
+    --border2: #333;
+    --text: #e8e6e0;
+    --text2: #888;
+    --text3: #555;
+    --accent: #c8f080;
+    --accent2: #a0d060;
+    --error: #f08080;
+    --mono: 'JetBrains Mono', monospace;
+    --serif: 'Instrument Serif', serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 20px;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px;
+  }
+
+  .tab {
+    padding: 5px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text2);
+    transition: all .15s;
+    border: none;
+    background: none;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  .tab.active {
+    background: var(--bg3);
+    color: var(--accent);
+    border: 1px solid var(--border2);
+  }
+
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text2);
+    font-size: 11px;
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* Panels */
+  .panel { display: none; flex: 1; overflow: hidden; }
+  .panel.active { display: flex; }
+
+  /* Chat panel */
+  #chat-panel { flex-direction: column; }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .msg { display: flex; gap: 12px; max-width: 800px; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 28px; height: 28px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .msg.user .msg-avatar { background: var(--accent); color: #000; }
+  .msg.bot .msg-avatar { background: var(--bg3); color: var(--accent); border: 1px solid var(--border2); }
+
+  .msg-body { display: flex; flex-direction: column; gap: 6px; }
+
+  .msg-text {
+    padding: 10px 14px;
+    border-radius: 6px;
+    line-height: 1.65;
+    font-size: 13px;
+  }
+
+  .msg.user .msg-text {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+  }
+
+  .msg.bot .msg-text {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .msg-sources {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-left: 2px;
+  }
+
+  .source-chip {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--accent);
+  }
+
+  .thinking {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .thinking span {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--text3);
+    animation: blink 1.2s ease-in-out infinite;
+  }
+
+  .thinking span:nth-child(2) { animation-delay: .2s; }
+  .thinking span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+
+  .input-area {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .input-area input {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color .15s;
+  }
+
+  .input-area input:focus { border-color: var(--accent); }
+  .input-area input::placeholder { color: var(--text3); }
+
+  .btn {
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--bg3);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:active { transform: scale(.98); }
+  .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent2); border-color: var(--accent2); color: #000; }
+  .btn.danger:hover { border-color: var(--error); color: var(--error); }
+
+  /* Files panel */
+  #files-panel { flex-direction: column; padding: 24px; gap: 20px; overflow-y: auto; }
+
+  .drop-zone {
+    border: 1px dashed var(--border2);
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    flex-shrink: 0;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(200,240,128,.04);
+  }
+
+  .drop-zone .drop-icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+    color: var(--text3);
+  }
+
+  .drop-zone p { color: var(--text2); font-size: 12px; line-height: 1.6; }
+  .drop-zone span { color: var(--accent); }
+
+  .section-label {
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .file-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: border-color .15s;
+  }
+
+  .file-item:hover { border-color: var(--border2); }
+
+  .file-icon { color: var(--accent); font-size: 12px; }
+  .file-name { flex: 1; color: var(--text); }
+  .file-actions { display: flex; gap: 6px; }
+
+  .file-btn {
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border2);
+    background: none;
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .file-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .file-btn.del:hover { color: var(--error); border-color: var(--error); }
+
+  .empty-state {
+    color: var(--text3);
+    font-size: 12px;
+    padding: 16px 0;
+    text-align: center;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-size: 12px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all .2s;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-color: var(--accent); color: var(--accent); }
+  .toast.error { border-color: var(--error); color: var(--error); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">course assistant</div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('chat')">chat</button>
+    <button class="tab" onclick="switchTab('files')">files</button>
+  </div>
+  <div class="status">
+    <div class="dot"></div>
+    <span>online</span>
+  </div>
+</header>
+
+<!-- Chat -->
+<!-- <div class="panel active" id="chat-panel">
+  <div class="messages" id="messages">
+    <div class="msg bot">
+      <div class="msg-avatar">ai</div>
+      <div class="msg-body">
+        <div class="msg-text">Привет. Задавай вопросы по материалам курса — отвечу на основе загруженных файлов.</div>
+      </div>
+    </div>
+  </div>
+  <div class="input-area">
+    <input type="text" id="question-input" placeholder="Задай вопрос по курсу..." />
+    <button class="btn primary" onclick="sendQuestion()">отправить</button>
+  </div>
+</div>
+
+<!-- Files -->
+<!-- <div class="panel" id="files-panel">
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div class="drop-icon">↑</div>
+    <p>Перетащи <span>.md файлы</span> сюда<br>или нажми чтобы выбрать</p>
+    <input type="file" id="file-input" accept=".md" multiple style="display:none" onchange="uploadFiles(this.files)" />
+  </div>
+
+  <div class="section-label">загруженные файлы</div>
+
+  <div class="file-list" id="file-list">
+    <div class="empty-state" id="empty-state">нет загруженных файлов</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // --- Tab switching ---
+  function switchTab(tab) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tab + '-panel').classList.add('active');
+    event.target.classList.add('active');
+    if (tab === 'files') loadFiles();
+  }
+
+  // --- Toast ---
+  function toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show ' + type;
+    setTimeout(() => el.className = 'toast', 2500);
+  }
+
+  // --- Chat ---
+  async function sendQuestion() {
+    const input = document.getElementById('question-input');
+    const question = input.value.trim();
+    if (!question) return;
+
+    addMessage('user', question);
+    input.value = '';
+
+    const thinkingId = addThinking();
+
+    try {
+      const res = await fetch('/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
+
+      const data = await res.json();
+      removeThinking(thinkingId);
+
+      if (!res.ok) throw new Error(data.detail || 'Ошибка');
+
+      addMessage('bot', data.answer, data.sources);
+    } catch (e) {
+      removeThinking(thinkingId);
+      addMessage('bot', 'Ошибка: ' + e.message);
+    }
+  }
+
+  function addMessage(role, text, sources = []) {
+    const messages = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+
+    const avatar = role === 'user' ? 'ты' : 'ai';
+    let sourcesHtml = '';
+    if (sources.length) {
+      sourcesHtml = '<div class="msg-sources">' +
+        sources.map(s => `<span class="source-chip">${s}</span>`).join('') +
+        '</div>';
+    }
+
+    div.innerHTML = `
+      <div class="msg-avatar">${avatar}</div>
+      <div class="msg-body">
+        <div class="msg-text">${text}</div>
+        ${sourcesHtml}
+      </div>
+    `;
+
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function addThinking() {
+    const messages = document.getElementById('messages');
+    const id = 'thinking-' + Date.now();
+    const div = document.createElement('div');
+    div.className = 'msg bot';
+    div.id = id;
+    div.innerHTML = `
+      <div class="msg-avatar">ai</div>
+      <div class="msg-body">
+        <div class="thinking">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    `;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    return id;
+  }
+
+  function removeThinking(id) {
+    document.getElementById(id)?.remove();
+  }
+
+  document.getElementById('question-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendQuestion();
+  }); -->
+
+  // --- Files ---
+  <!-- async function loadFiles() {
+    try {
+      const res = await fetch('/files');
+      const data = await res.json();
+      renderFiles(data.files);
+    } catch (e) {
+      toast('Не удалось загрузить список файлов', 'error');
+    }
+  }
+
+  function renderFiles(files) {
+    const list = document.getElementById('file-list');
+    const empty = document.getElementById('empty-state');
+
+    const items = list.querySelectorAll('.file-item');
+    items.forEach(i => i.remove());
+
+    if (!files.length) {
+      empty.style.display = 'block';
+      return;
+    }
+
+    empty.style.display = 'none';
+    files.forEach(name => {
+      const div = document.createElement('div');
+      div.className = 'file-item';
+      div.id = 'file-' + name;
+      div.innerHTML = `
+        <span class="file-icon">md</span>
+        <span class="file-name">${name}</span>
+        <div class="file-actions">
+          <button class="file-btn" onclick="reindexFile('${name}')">переиндексировать</button>
+          <button class="file-btn del" onclick="deleteFile('${name}')">удалить</button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  async function uploadFiles(files) {
+    for (const file of files) {
+      const fd = new FormData();
+      fd.append('file', file);
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+        toast(`${file.name} — ${data.chunks} чанков`, 'success');
+      } catch (e) {
+        toast(`Ошибка: ${e.message}`, 'error');
+      }
+    }
+    loadFiles();
+  }
+
+  async function deleteFile(name) {
+    if (!confirm(`Удалить ${name}?`)) return;
+    try {
+      const res = await fetch('/files/' + name, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      document.getElementById('file-' + name)?.remove();
+      toast(`${name} удалён`, 'success');
+      loadFiles();
+    } catch {
+      toast('Ошибка удаления', 'error');
+    }
+  }
+
+  async function reindexFile(name) {
+    try {
+      const res = await fetch(`/files/${name}/reindex`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail);
+      toast(`${name} переиндексирован — ${data.chunks} чанков`, 'success');
+    } catch (e) {
+      toast('Ошибка переиндексации', 'error');
+    }
+  }
+
+  // --- Drag & drop ---
+  const zone = document.getElementById('drop-zone');
+
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.classList.add('drag-over');
+  });
+
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const files = [...e.dataTransfer.files].filter(f => f.name.endsWith('.md'));
+    if (files.length) uploadFiles(files);
+    else toast('Только .md файлы', 'error');
+  });
+</script>
+</body>
+</html>  -->
+
+
+
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course Assistant</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --bg2: #161616;
+    --bg3: #1e1e1e;
+    --border: #2a2a2a;
+    --border2: #333;
+    --text: #e8e6e0;
+    --text2: #888;
+    --text3: #555;
+    --accent: #c8f080;
+    --accent2: #a0d060;
+    --error: #f08080;
+    --mono: 'JetBrains Mono', monospace;
+    --serif: 'Instrument Serif', serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 20px;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px;
+  }
+
+  .tab {
+    padding: 5px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text2);
+    transition: all .15s;
+    border: none;
+    background: none;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  .tab.active {
+    background: var(--bg3);
+    color: var(--accent);
+    border: 1px solid var(--border2);
+  }
+
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text2);
+    font-size: 11px;
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* Panels */
+  .panel { display: none; flex: 1; overflow: hidden; }
+  .panel.active { display: flex; }
+
+  /* Chat panel */
+  #chat-panel { flex-direction: column; }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .msg { display: flex; gap: 12px; max-width: 800px; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 28px; height: 28px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .msg.user .msg-avatar { background: var(--accent); color: #000; }
+  .msg.bot .msg-avatar { background: var(--bg3); color: var(--accent); border: 1px solid var(--border2); }
+
+  .msg-body { display: flex; flex-direction: column; gap: 6px; }
+
+  .msg-text {
+    padding: 10px 14px;
+    border-radius: 6px;
+    line-height: 1.65;
+    font-size: 13px;
+  }
+
+  .msg.user .msg-text {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+  }
+
+  .msg.bot .msg-text {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .msg-sources {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-left: 2px;
+  }
+
+  .source-chip {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--accent);
+  }
+
+  .thinking {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .thinking span {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--text3);
+    animation: blink 1.2s ease-in-out infinite;
+  }
+
+  .thinking span:nth-child(2) { animation-delay: .2s; }
+  .thinking span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+
+  .input-area {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .input-area input {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color .15s;
+  }
+
+  .input-area input:focus { border-color: var(--accent); }
+  .input-area input::placeholder { color: var(--text3); }
+
+  .btn {
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--bg3);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:active { transform: scale(.98); }
+  .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent2); border-color: var(--accent2); color: #000; }
+  .btn.danger:hover { border-color: var(--error); color: var(--error); }
+
+  /* Files panel */
+  #files-panel { flex-direction: column; padding: 24px; gap: 20px; overflow-y: auto; }
+
+  .drop-zone {
+    border: 1px dashed var(--border2);
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    flex-shrink: 0;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(200,240,128,.04);
+  }
+
+  .drop-zone .drop-icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+    color: var(--text3);
+  }
+
+  .drop-zone p { color: var(--text2); font-size: 12px; line-height: 1.6; }
+  .drop-zone span { color: var(--accent); }
+
+  .section-label {
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .file-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: border-color .15s;
+  }
+
+  .file-item:hover { border-color: var(--border2); }
+
+  .file-icon { color: var(--accent); font-size: 12px; }
+  .file-name { flex: 1; color: var(--text); }
+  .file-actions { display: flex; gap: 6px; }
+
+  .file-btn {
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border2);
+    background: none;
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .file-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .file-btn.del:hover { color: var(--error); border-color: var(--error); }
+
+  .empty-state {
+    color: var(--text3);
+    font-size: 12px;
+    padding: 16px 0;
+    text-align: center;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-size: 12px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all .2s;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-color: var(--accent); color: var(--accent); }
+  .toast.error { border-color: var(--error); color: var(--error); }
+
+  /* Markdown rendering */
+  .msg-text p { margin-bottom: 8px; }
+  .msg-text p:last-child { margin-bottom: 0; }
+
+  .msg-text pre {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    margin: 8px 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .msg-text code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--accent);
+  }
+
+  .msg-text pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text);
+    border-radius: 0;
+  }
+
+  .msg-text ul, .msg-text ol {
+    padding-left: 20px;
+    margin: 6px 0;
+  }
+
+  .msg-text li { margin-bottom: 3px; }
+
+  .msg-text strong { color: var(--accent); font-weight: 500; }
+
+  .msg-text h1, .msg-text h2, .msg-text h3 {
+    color: var(--accent);
+    margin: 10px 0 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">course assistant</div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('chat')">chat</button>
+    <button class="tab" onclick="switchTab('files')">files</button>
+  </div>
+  <div class="status">
+    <div class="dot"></div>
+    <span>online</span>
+  </div>
+</header>
+
+<!-- Chat -->
+<div class="panel active" id="chat-panel">
+  <div class="messages" id="messages">
+    <div class="msg bot">
+      <div class="msg-avatar">ai</div>
+      <div class="msg-body">
+        <div class="msg-text">Привет. Задавай вопросы по материалам курса — отвечу на основе загруженных файлов.</div>
+      </div>
+    </div>
+  </div>
+  <div class="input-area">
+    <input type="text" id="question-input" placeholder="Задай вопрос по курсу..." />
+    <button class="btn primary" onclick="sendQuestion()">отправить</button>
+  </div>
+</div>
+
+<!-- Files -->
+<div class="panel" id="files-panel">
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div class="drop-icon">↑</div>
+    <p>Перетащи <span>.md файлы</span> сюда<br>или нажми чтобы выбрать</p>
+    <input type="file" id="file-input" accept=".md" multiple style="display:none" onchange="uploadFiles(this.files)" />
+  </div>
+
+  <div class="section-label">загруженные файлы</div>
+
+  <div class="file-list" id="file-list">
+    <div class="empty-state" id="empty-state">нет загруженных файлов</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<script>
+  marked.setOptions({ breaks: true, gfm: true });
+
+  // --- Tab switching ---
+  function switchTab(tab) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tab + '-panel').classList.add('active');
+    event.target.classList.add('active');
+    if (tab === 'files') loadFiles();
+  }
+
+  // --- Toast ---
+  function toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show ' + type;
+    setTimeout(() => el.className = 'toast', 2500);
+  }
+
+  // --- Chat ---
+  async function sendQuestion() {
+    const input = document.getElementById('question-input');
+    const question = input.value.trim();
+    if (!question) return;
+
+    addMessage('user', question);
+    input.value = '';
+
+    const thinkingId = addThinking();
+
+    try {
+      const res = await fetch('/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
+
+      const data = await res.json();
+      removeThinking(thinkingId);
+
+      if (!res.ok) throw new Error(data.detail || 'Ошибка');
+
+      addMessage('bot', data.answer, data.sources);
+    } catch (e) {
+      removeThinking(thinkingId);
+      addMessage('bot', 'Ошибка: ' + e.message);
+    }
+  }
+
+  function addMessage(role, text, sources = []) {
+    const messages = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+
+    const avatar = role === 'user' ? 'ты' : 'ai';
+    let sourcesHtml = '';
+    if (sources.length) {
+      sourcesHtml = '<div class="msg-sources">' +
+        sources.map(s => `<span class="source-chip">${s}</span>`).join('') +
+        '</div>';
+    }
+
+    const renderedText = role === 'bot' ? marked.parse(text) : text;
+
+    div.innerHTML = `
+      <div class="msg-avatar">${avatar}</div>
+      <div class="msg-body">
+        <div class="msg-text">${renderedText}</div>
+        ${sourcesHtml}
+      </div>
+    `;
+
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function addThinking() {
+    const messages = document.getElementById('messages');
+    const id = 'thinking-' + Date.now();
+    const div = document.createElement('div');
+    div.className = 'msg bot';
+    div.id = id;
+    div.innerHTML = `
+      <div class="msg-avatar">ai</div>
+      <div class="msg-body">
+        <div class="thinking">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    `;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    return id;
+  }
+
+  function removeThinking(id) {
+    document.getElementById(id)?.remove();
+  }
+
+  document.getElementById('question-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendQuestion();
+  });
+
+  // --- Files ---
+  async function loadFiles() {
+    try {
+      const res = await fetch('/files');
+      const data = await res.json();
+      renderFiles(data.files);
+    } catch (e) {
+      toast('Не удалось загрузить список файлов', 'error');
+    }
+  }
+
+  function renderFiles(files) {
+    const list = document.getElementById('file-list');
+    const empty = document.getElementById('empty-state');
+
+    const items = list.querySelectorAll('.file-item');
+    items.forEach(i => i.remove());
+
+    if (!files.length) {
+      empty.style.display = 'block';
+      return;
+    }
+
+    empty.style.display = 'none';
+    files.forEach(name => {
+      const div = document.createElement('div');
+      div.className = 'file-item';
+      div.id = 'file-' + name;
+      div.innerHTML = `
+        <span class="file-icon">md</span>
+        <span class="file-name">${name}</span>
+        <div class="file-actions">
+          <button class="file-btn" onclick="reindexFile('${name}')">переиндексировать</button>
+          <button class="file-btn del" onclick="deleteFile('${name}')">удалить</button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  async function uploadFiles(files) {
+    for (const file of files) {
+      const fd = new FormData();
+      fd.append('file', file);
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+        toast(`${file.name} — ${data.chunks} чанков`, 'success');
+      } catch (e) {
+        toast(`Ошибка: ${e.message}`, 'error');
+      }
+    }
+    loadFiles();
+  }
+
+  async function deleteFile(name) {
+    if (!confirm(`Удалить ${name}?`)) return;
+    try {
+      const res = await fetch('/files/' + name, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      document.getElementById('file-' + name)?.remove();
+      toast(`${name} удалён`, 'success');
+      loadFiles();
+    } catch {
+      toast('Ошибка удаления', 'error');
+    }
+  }
+
+  async function reindexFile(name) {
+    try {
+      const res = await fetch(`/files/${name}/reindex`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail);
+      toast(`${name} переиндексирован — ${data.chunks} чанков`, 'success');
+    } catch (e) {
+      toast('Ошибка переиндексации', 'error');
+    }
+  }
+
+  // --- Drag & drop ---
+  const zone = document.getElementById('drop-zone');
+
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.classList.add('drag-over');
+  });
+
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const files = [...e.dataTransfer.files].filter(f => f.name.endsWith('.md'));
+    if (files.length) uploadFiles(files);
+    else toast('Только .md файлы', 'error');
+  });
+</script>
+</body>
+</html>

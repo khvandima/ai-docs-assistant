@@ -1,0 +1,38 @@
+# Web framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-multipart==0.0.9
+
+# LangGraph + LangChain
+langgraph==0.2.28
+langchain==0.3.1
+langchain-core==0.3.6
+langchain-community==0.3.1
+
+# LLM провайдеры (устанавливай нужные)
+langchain-ollama==0.2.0
+langchain-openai==0.2.0
+langchain-anthropic==0.3.0
+langchain-groq==0.2.0
+
+# Reranking
+sentence-transformers==3.1.1
+
+# Vector store
+qdrant-client==1.11.1
+fastembed==0.4.1
+
+# Конфигурация
+pydantic==2.9.2
+pydantic-settings==2.5.2
+
+# Надёжность
+tenacity==8.5.0
+
+# Тесты
+pytest==8.3.3
+pytest-asyncio==0.24.0
+
+# Оценка качества RAG
+ragas==0.4.3
+datasets==3.2.0
